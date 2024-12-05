@@ -1,0 +1,377 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+% !TeX program = pdfLaTeX
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx,psfrag,epsf}
+\usepackage{enumerate}
+\usepackage[]{natbib}
+\usepackage{textcomp}
+
+
+%\pdfminorversion=4
+% NOTE: To produce blinded version, replace "0" with "1" below.
+\newcommand{\blind}{0}
+
+% DON'T change margins - should be 1 inch all around.
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-1in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.7in}%
+\addtolength{\topmargin}{-1in}%
+
+%% load any required packages here
+
+
+
+% tightlist command for lists without linebreak
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+
+\usepackage{float}
+
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\hypersetup{
+  pdftitle={Survival Analysis of Infection Control Measures in Burn Patients},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+
+
+\begin{document}
+
+
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\if0\blind
+{
+  \title{\bf Survival Analysis of Infection Control Measures in Burn
+Patients}
+
+  \author{
+        Ziyue Yang \thanks{The authors gratefully acknowledge
+Prof.~David Rocke and Brittany Lemmon for their instruction and guidance
+throughout this project.} \\
+    \\
+      }
+  \maketitle
+} \fi
+
+\if1\blind
+{
+  \bigskip
+  \bigskip
+  \bigskip
+  \begin{center}
+    {\LARGE\bf Survival Analysis of Infection Control Measures in Burn
+Patients}
+  \end{center}
+  \medskip
+} \fi
+
+\bigskip
+\begin{abstract}
+TBD
+\end{abstract}
+
+\noindent%
+ 
+
+\vfill
+
+\newpage
+\spacingset{1.9} % DON'T change the spacing!
+
+\section{Introduction}\label{introduction}
+
+Infection with \emph{Staphylococcus aureus} is a critical concern in
+burn patients, often contributing to prolonged hospital stays, increased
+morbidity, and higher healthcare costs \citep{norbury_infection_2016}.
+Therefore, effective infection control measures are of great importance.
+This study investigates the impact of replacing routine bathing with
+total body washing using antimicrobial agents on infection risk,
+leveraging survival analysis techniques to rigorously evaluate the time
+to infection. The dataset, originally published by Ichida \emph{et al.}
+(1993), provides data on infection times, patient characteristics, and
+clinical interventions \citep{ichida_evaluation_1993}.
+
+Survival analysis accommodates both censored observations (patients who
+do not develop infections during the study) and the timing of events. In
+particular, to highlight differences in infection-free survival between
+patients receiving routine bathing and those undergoing total body
+washing, the Kaplan-Meier estimator was used
+\citep{kaplan_nonparametric_1958}.
+
+To further identify factors influencing infection risk, we use the Cox
+proportional hazards model \citep{cox1972}. This model evaluates the
+relationship between various predictors---such as patient gender, burn
+characteristics, and clinical treatments---and the likelihood of
+infection over time. Both time-independent covariates (e.g.~patient
+gender, race) and time-dependent covariates (e.g.~surgical excision of
+burn tissue, prophylactic antibiotic treatment) are employed for a
+comprehensive analysis of infection dynamics.
+
+This report aims to present a clear and actionable evaluation of the
+infection control measures through the lens of survival analysis, with
+insights that inform clinical decision-making and contribute to better
+patient care.
+
+\section{Data Description}\label{data-description}
+
+The dataset \texttt{burn} consists of 154 observations of burn patients
+and 17 variables that capture patient characteristics, clinical
+interventions, and infection status with time to infection.
+
+\subsection{\texorpdfstring{\textbf{Outcome
+Variables}}{Outcome Variables}}\label{outcome-variables}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{T3 (time to infection)}: The time (in days) until infection
+  with \emph{Staphylococcus aureus}.
+\item
+  \textbf{D3 (infection status)}: A binary variable indicating whether
+  the patient developed an infection within the course of the study (1 =
+  infected, 0 = not infected).
+\end{itemize}
+
+\subsection{\texorpdfstring{\textbf{Time-Dependent
+Covariates}}{Time-Dependent Covariates}}\label{time-dependent-covariates}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{T1 (time to surgical excision)}: The time (in days) to
+  surgical excision of burn tissue.
+\item
+  \textbf{D1 (surgical excision status)}: A binary variable indicating
+  whether surgical excision was performed (1 = excised, 0 = not
+  excised).
+\item
+  \textbf{T2 (time to antibiotic treatment)}: The time (in days) to the
+  administration of prophylactic antibiotic treatment.
+\item
+  \textbf{D2 (antibiotic treatment status)}: A binary variable
+  indicating whether antibiotics were administered (1 = treated, 0 = not
+  treated).
+\end{itemize}
+
+\subsection{\texorpdfstring{\textbf{Baseline
+Characteristics}}{Baseline Characteristics}}\label{baseline-characteristics}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Treatment}: Categorical variable indicating the bathing
+  regimen (Routine or Cleansing with antimicrobial agents).
+\item
+  \textbf{Gender}: Categorical variable indicating the patient's gender
+  (Male or Female).
+\item
+  \textbf{Race}: Categorical variable indicating the patient's race
+  (Nonwhite or White).
+\item
+  \textbf{PercentBurned}: Numeric variable representing the percentage
+  of the patient's body surface area affected by burns.
+\end{itemize}
+
+\subsection{\texorpdfstring{\textbf{Burn Site
+Characteristics}}{Burn Site Characteristics}}\label{burn-site-characteristics}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{SiteHead}: Binary factor indicating whether the head was
+  burned (Burned or Not Burned).
+\item
+  \textbf{SiteButtock}: Binary factor indicating whether the buttocks
+  were burned (Burned or Not Burned).
+\item
+  \textbf{SiteTrunk}: Binary factor indicating whether the trunk was
+  burned (Burned or Not Burned).
+\item
+  \textbf{SiteUpperLeg}: Binary factor indicating whether the upper leg
+  was burned (Burned or Not Burned).
+\item
+  \textbf{SiteLowerLeg}: Binary factor indicating whether the lower leg
+  was burned (Burned or Not Burned).
+\item
+  \textbf{SiteRespTract}: Binary factor indicating whether the
+  respiratory tract was burned (Burned or Not Burned).
+\end{itemize}
+
+\subsection{\texorpdfstring{\textbf{Burn
+Type}}{Burn Type}}\label{burn-type}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{BurnType}: Categorical variable specifying the type of burn
+  (Chemical, Scald, Flame, or Electric).
+\end{itemize}
+
+\section{Methods}\label{methods}
+
+\subsection{\texorpdfstring{\textbf{Kaplan-Meier Survival
+Analysis}}{Kaplan-Meier Survival Analysis}}\label{kaplan-meier-survival-analysis}
+
+The Kaplan-Meier estimator was used to estimate and visualize the
+probability of remaining infection-free over time for patients
+undergoing either routine bathing or antimicrobial washing.
+Additionally, Nelson-Aalen estimate was also plotted for a comprehensive
+view of survival difference between groups.
+
+Survival curves were compared using the \texttt{survdiff} function in
+package \texttt{survival}, which performs a log-rank test to assess
+whether the differences between the two groups are statistically
+significant.
+
+Additionally, cumulative hazard functions were plotted against time to
+estimate the cumulative infection probability at different time points.
+Complementary log-log survival curves were plotted against
+log-transformed time to assess if the ratio of hazard rates between two
+treatment groups remains constant over time.
+
+\subsection{\texorpdfstring{\textbf{Cox Proportional Hazards
+Model}}{Cox Proportional Hazards Model}}\label{cox-proportional-hazards-model}
+
+\subsubsection{\texorpdfstring{\textbf{Model with Time-Independent
+Covariates}}{Model with Time-Independent Covariates}}\label{model-with-time-independent-covariates}
+
+An initial Cox proportional hazards model was constructed using
+time-independent covariates to evaluate their relationship with the risk
+of infection. The primary predictor of interest was \textbf{Treatment}.
+Additional time-independent variables were sequentially introduced into
+the model.
+
+To address the violation of the proportional hazards assumption
+identified in the unstratified model, the variable
+\textbf{SiteRespTract} was stratified. This allowed for differing
+baseline hazard functions for patients with and without burns in the
+respiratory tract.
+
+Model refinement was performed using the \texttt{drop1} function to
+identify covariates that did not significantly contribute to model
+performance. Multicollinearity among covariates was assessed using
+variance inflation factors, ensuring that redundant predictors were
+identified and addressed without compromising the integrity of the
+model.
+
+\subsubsection{\texorpdfstring{\textbf{Model with Time-Dependent
+Covariates}}{Model with Time-Dependent Covariates}}\label{model-with-time-dependent-covariates}
+
+To incorporate time-dependent predictors, the dataset was expanded using
+counting process notation. Two key time-dependent covariates were
+included: 1. \textbf{Surgical excision of burn tissue (T1, D1)}. 2.
+\textbf{Prophylactic antibiotic treatment (T2, D2)}.
+
+A Cox model was constructed combining time-dependent and
+time-independent covariates. The time-dependent variables captured the
+dynamic effects of these interventions on infection risk, while
+time-independent variables provided baseline hazard adjustments.
+
+\subsection{\texorpdfstring{\textbf{Model Checking and
+Diagnostics}}{Model Checking and Diagnostics}}\label{model-checking-and-diagnostics}
+
+Model checking was performed using a comprehensive suite of diagnostic
+techniques:
+
+\subsubsection{\texorpdfstring{\textbf{Proportional Hazards
+Assumption}}{Proportional Hazards Assumption}}\label{proportional-hazards-assumption}
+
+The proportional hazards assumption was evaluated using Schoenfeld
+residual plots which test whether the residuals show systematic trends
+over time and \texttt{cox.zph} function from package \texttt{survival}.
+Where violations were detected, appropriate adjustments were made, such
+as stratification to allow baseline hazard functions to differ between
+groups.
+
+\subsubsection{\texorpdfstring{\textbf{Goodness-of-Fit}}{Goodness-of-Fit}}\label{goodness-of-fit}
+
+Cox-Snell residuals were used to assess overall model fit. A cumulative
+hazard plot was constructed to compare observed data with the expected
+hazard under the model. A straight 45-degree line indicated good fit,
+while deviations suggested potential inadequacies.
+
+\subsubsection{\texorpdfstring{\textbf{Outlier
+Analysis}}{Outlier Analysis}}\label{outlier-analysis}
+
+Martingale residuals and deviance residuals were plotted against the
+linear predictor to assess nonlinearity and detect possible outliers in
+the model.
+
+\subsubsection{\texorpdfstring{\textbf{Influential
+Observations}}{Influential Observations}}\label{influential-observations}
+
+DFBETA values were plotted to identify leverage points, indicating
+observations that had a disproportionately large influence on the
+estimated coefficients.
+
+\subsection{\texorpdfstring{\textbf{Final Model
+Selection}}{Final Model Selection}}\label{final-model-selection}
+
+TBD
+
+\section{Results}\label{results}
+
+\subsection{Kaplan-Meier Analysis}\label{kaplan-meier-analysis}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Plot}: Survival curves for the two bathing methods (routine
+  vs.~antimicrobial).
+\item
+  \textbf{Log-rank test}: p-value for differences in survival times.
+\end{itemize}
+
+\subsection{Cox Proportional Hazards
+Model}\label{cox-proportional-hazards-model-1}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Significant covariates}: Report hazard ratios, confidence
+  intervals, and p-values.
+\item
+  \textbf{Interpretation}: Discuss the clinical meaning of these
+  results.
+\end{itemize}
+
+\subsection{Time-Dependent Predictors}\label{time-dependent-predictors}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Surgical excision and antibiotics}: Analyze their time-varying
+  effects on infection risk.
+\end{itemize}
+
+\section{Discussion}\label{discussion}
+
+Summarize findings and their clinical implications. Discuss limitations
+and future research directions.
+
+\section{Conclusion}\label{conclusion}
+
+Provide actionable recommendations based on the analysis.
+
+\section{Appendices}\label{appendices}
+
+Include additional plots, diagnostic checks, and R code if necessary.
+
+\bibliographystyle{plain}
+\bibliography{bibliography.bib}
+
+
+
+\end{document}

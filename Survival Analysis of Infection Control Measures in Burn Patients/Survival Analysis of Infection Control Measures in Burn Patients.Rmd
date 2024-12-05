@@ -1,0 +1,130 @@
+---
+title: "Survival Analysis of Infection Control Measures in Burn Patients"
+blinded: 0
+authors: 
+- name: Ziyue Yang
+  thanks: The authors gratefully acknowledge Prof. David Rocke and Brittany Lemmon for their instruction and guidance throughout this project.
+output: rticles::asa_article
+bibliography: bibliography.bib
+csl: apa.csl
+header-includes:
+  - \usepackage{float}
+abstract: >
+  TBD
+---
+
+# Introduction
+
+
+Infection with *Staphylococcus aureus* is a critical concern in burn patients, often contributing to prolonged hospital stays, increased morbidity, and higher healthcare costs [@norbury_infection_2016]. Therefore, effective infection control measures are of great importance. This study investigates the impact of replacing routine bathing with total body washing using antimicrobial agents on infection risk, leveraging survival analysis techniques to rigorously evaluate the time to infection. The dataset, originally published by Ichida *et al.* (1993), provides data on infection times, patient characteristics, and clinical interventions [@ichida_evaluation_1993].
+
+
+Survival analysis accommodates both censored observations (patients who do not develop infections during the study) and the timing of events. In particular, to highlight differences in infection-free survival between patients receiving routine bathing and those undergoing total body washing, the Kaplan-Meier estimator was used [@kaplan_nonparametric_1958]. 
+
+To further identify factors influencing infection risk, we use the Cox proportional hazards model [@cox1972]. This model evaluates the relationship between various predictors—such as patient gender, burn characteristics, and clinical treatments—and the likelihood of infection over time. Both time-independent covariates (e.g. patient gender, race) and time-dependent covariates (e.g. surgical excision of burn tissue, prophylactic antibiotic treatment) are employed for a comprehensive analysis of infection dynamics. 
+
+This report aims to present a clear and actionable evaluation of the infection control measures through the lens of survival analysis, with insights that inform clinical decision-making and contribute to better patient care.
+
+
+# Data Description
+
+The dataset `burn` consists of 154 observations of burn patients and 17 variables that capture patient characteristics, clinical interventions, and infection status with time to infection.  
+
+## **Outcome Variables**
+- **T3 (time to infection)**: The time (in days) until infection with *Staphylococcus aureus*.
+- **D3 (infection status)**: A binary variable indicating whether the patient developed an infection within the course of the study (1 = infected, 0 = not infected).
+
+## **Time-Dependent Covariates**
+- **T1 (time to surgical excision)**: The time (in days) to surgical excision of burn tissue.
+- **D1 (surgical excision status)**: A binary variable indicating whether surgical excision was performed (1 = excised, 0 = not excised).
+- **T2 (time to antibiotic treatment)**: The time (in days) to the administration of prophylactic antibiotic treatment.
+- **D2 (antibiotic treatment status)**: A binary variable indicating whether antibiotics were administered (1 = treated, 0 = not treated).
+
+## **Baseline Characteristics**
+- **Treatment**: Categorical variable indicating the bathing regimen (Routine or Cleansing with antimicrobial agents).
+- **Gender**: Categorical variable indicating the patient's gender (Male or Female).
+- **Race**: Categorical variable indicating the patient's race (Nonwhite or White).
+- **PercentBurned**: Numeric variable representing the percentage of the patient’s body surface area affected by burns.
+
+## **Burn Site Characteristics**
+- **SiteHead**: Binary factor indicating whether the head was burned (Burned or Not Burned).
+- **SiteButtock**: Binary factor indicating whether the buttocks were burned (Burned or Not Burned).
+- **SiteTrunk**: Binary factor indicating whether the trunk was burned (Burned or Not Burned).
+- **SiteUpperLeg**: Binary factor indicating whether the upper leg was burned (Burned or Not Burned).
+- **SiteLowerLeg**: Binary factor indicating whether the lower leg was burned (Burned or Not Burned).
+- **SiteRespTract**: Binary factor indicating whether the respiratory tract was burned (Burned or Not Burned).
+
+## **Burn Type**
+- **BurnType**: Categorical variable specifying the type of burn (Chemical, Scald, Flame, or Electric).
+
+
+# Methods
+
+## **Kaplan-Meier Survival Analysis**
+The Kaplan-Meier estimator was used to estimate and visualize the probability of remaining infection-free over time for patients undergoing either routine bathing or antimicrobial washing. Additionally, Nelson-Aalen estimate was also plotted for a comprehensive view of survival difference between groups. 
+
+Survival curves were compared using the `survdiff` function in package `survival`, which performs a log-rank test to assess whether the differences between the two groups are statistically significant. 
+
+Additionally, cumulative hazard functions were plotted against time to estimate the cumulative infection probability at different time points. Complementary log-log survival curves were plotted against log-transformed time to assess if the ratio of hazard rates between two treatment groups remains constant over time. 
+
+## **Cox Proportional Hazards Model**
+### **Model with Time-Independent Covariates**
+
+An initial Cox proportional hazards model was constructed using time-independent covariates to evaluate their relationship with the risk of infection. The primary predictor of interest was **Treatment**. Additional time-independent variables were sequentially introduced into the model.
+
+To address the violation of the proportional hazards assumption identified in the unstratified model, the variable **SiteRespTract** was stratified. This allowed for differing baseline hazard functions for patients with and without burns in the respiratory tract.
+
+Model refinement was performed using the `drop1` function to identify covariates that did not significantly contribute to model performance. Multicollinearity among covariates was assessed using variance inflation factors, ensuring that redundant predictors were identified and addressed without compromising the integrity of the model. 
+
+### **Model with Time-Dependent Covariates**
+To incorporate time-dependent predictors, the dataset was expanded using counting process notation. Two key time-dependent covariates were included:
+1. **Surgical excision of burn tissue (T1, D1)**.
+2. **Prophylactic antibiotic treatment (T2, D2)**.
+
+A Cox model was constructed combining time-dependent and time-independent covariates. The time-dependent variables captured the dynamic effects of these interventions on infection risk, while time-independent variables provided baseline hazard adjustments.
+
+
+## **Model Checking and Diagnostics**
+Model checking was performed using a comprehensive suite of diagnostic techniques:
+
+### **Proportional Hazards Assumption**
+The proportional hazards assumption was evaluated using Schoenfeld residual plots which test whether the residuals show systematic trends over time and `cox.zph` function from package `survival`. Where violations were detected, appropriate adjustments were made, such as stratification to allow baseline hazard functions to differ between groups.
+
+### **Goodness-of-Fit**
+Cox-Snell residuals were used to assess overall model fit. A cumulative hazard plot was constructed to compare observed data with the expected hazard under the model. A straight 45-degree line indicated good fit, while deviations suggested potential inadequacies.
+
+
+### **Outlier Analysis**
+Martingale residuals and deviance residuals were plotted against the linear predictor to assess nonlinearity and detect possible outliers in the model. 
+
+### **Influential Observations**
+DFBETA values were plotted to identify leverage points, indicating observations that had a disproportionately large influence on the estimated coefficients.
+
+
+
+
+## **Final Model Selection**
+TBD
+
+
+
+# Results
+## Kaplan-Meier Analysis
+- **Plot**: Survival curves for the two bathing methods (routine vs. antimicrobial).
+- **Log-rank test**: p-value for differences in survival times.
+
+## Cox Proportional Hazards Model
+- **Significant covariates**: Report hazard ratios, confidence intervals, and p-values.
+- **Interpretation**: Discuss the clinical meaning of these results.
+
+## Time-Dependent Predictors
+- **Surgical excision and antibiotics**: Analyze their time-varying effects on infection risk.
+
+# Discussion
+Summarize findings and their clinical implications. Discuss limitations and future research directions.
+
+# Conclusion
+Provide actionable recommendations based on the analysis.
+
+# Appendices
+Include additional plots, diagnostic checks, and R code if necessary.

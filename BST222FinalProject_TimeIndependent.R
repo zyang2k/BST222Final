@@ -5,6 +5,7 @@
 library(KMsurv)
 library(survival)
 library(MASS)
+library(car)
 
 # load burn data
 data(burn)
@@ -60,132 +61,141 @@ plot(NAcurves, fun = "cloglog", col = 1:2, lwd = 2, xlab = "time (days in log sc
 legend("bottomright", legend = levels(burn1$Treatment), col = 1:2, lwd = 2)
 title("Complementary Log-Log Survival Curves")
 
-################## stepwise cox ###############################
+################## Cox Model ###############################
+# Construct Cox model on all time-independent predictors
+fit_independent <- coxph(burn1.surv ~ Treatment + Gender + Race + PercentBurned +
+                           SiteHead + SiteButtock + SiteTrunk +
+                           SiteUpperLeg + SiteLowerLeg + SiteRespTract, 
+                         data = burn1)
 
-# Construct Cox model on time-independent predictors
-# null model
-fit_0 <- coxph(burn1.surv ~ Treatment, data = burn1)
-
-# Perform forward stepwise regression
-step_model <- stepAIC(
-  fit_0,
-  scope = list(upper = ~Obs + Treatment + Gender + Race + PercentBurned + SiteHead + 
-                 SiteButtock + SiteTrunk + SiteUpperLeg + SiteLowerLeg + SiteRespTract + 
-                 BurnType, 
-               lower = ~ Treatment),
-  direction = "both",
-  k = 2
-)
-
-# View the summary of the final model
-summary(step_model)
+fit_stratified <- coxph(burn1.surv ~ Treatment + Gender + Race + PercentBurned + 
+                          SiteHead + SiteButtock + SiteTrunk +
+                          SiteUpperLeg + SiteLowerLeg + strata(SiteRespTract),
+                        data = burn1)
 
 
-# Based on the stepAIC result, we exclude burn site as a group
+################## Cox Model ###############################
+# Summarize the model
+summary(fit_independent)
+summary(fit_stratified)
+
+# Check proportional hazards assumption
+cox.zph(fit_independent)
+cox.zph(fit_stratified)
+# seems to me that in the unstratified model, SiteRespTract violated the PH assumption 
 
 
+# Plot Schoenfeld residuals to assess proportional hazards assumption
+plot(cox.zph(fit_independent))
+plot(cox.zph(fit_stratified))
+# schoenfeld residual not look too bad
 
+# compare 2 models
+anova(fit_independent, fit_stratified, test = "LRT")
+AIC(fit_independent, fit_stratified)
 
-################## model checking ###############################
+# stratified better
 
-# step model checking
+# use drop1 to test which to drop
+drop1(fit_stratified, test = "Chisq")
 
-# test proportionality via cox.zph
-# seems to be significant non-proportionality
+# drop 1 result indicate a only treatment and race matters, multicliearity? 
 
-burn1.zph <- cox.zph(step_model)
-print(burn1.zph)
+# check for multicolinearity
+vif(fit_stratified)
+# no significant multicoliearity was detected
 
-par(mfrow = c(2, 2))
+# use stratified, drop unsignificant variables
+fit_refined <- coxph(burn1.surv ~ Treatment + Gender + Race + strata(SiteRespTract), 
+                     data = burn1)
+summary(fit_refined)
 
-plot(burn1.zph[1], 
-     main = "Schoenfeld Residuals for Treatment Type")
-plot(burn1.zph[2], 
-     main = "Schoenfeld Residuals for Gender Type")
-plot(burn1.zph[3], 
-     main = "Schoenfeld Residuals for Race Type")
-plot(burn1.zph[4], 
-     main = "Schoenfeld Residuals for BurnType Type")
+# recheck proprtional assumption -- passed
 
+################## Model Checking ###############################
+# Schoenfeld residuals to test for proportionality via cox.zph
+cox_zph <- cox.zph(fit_refined)
 
-
-# cox-snell residual
+# Plot Schoenfeld residuals for each covariate
+par(mfrow = c(2, 2))  # Adjust plot layout
+plot(cox_zph[1], main = "Schoenfeld Residuals for Treatment")
+plot(cox_zph[2], main = "Schoenfeld Residuals for Gender")
+plot(cox_zph[3], main = "Schoenfeld Residuals for Race")
+# Reset plotting layout
 par(mfrow = c(1, 1))
 
-# calculate the various residuals 
-burn1.mart <- residuals(step_model, type = "martingale")
-burn1.dev <- residuals(step_model,type="deviance")
-burn1.dfb <- residuals(step_model,type="dfbeta")
-burn1.cs <- burn1$D3 - burn1.mart
 
 
-# find linear predictor
-burn1.preds <- predict(step_model)
+# Predicted cumulative hazards for each individual
+cum_haz <- predict(fit_refined, type = "expected")
+# Cox-Snell residuals
+cox_snell_residuals <- cum_haz
+# Create a survival object for Cox-Snell residuals
+surv_coxsnell <- Surv(cox_snell_residuals, burn1$D3)
+
+# Fit the survival model
+fit_coxsnell <- survfit(surv_coxsnell ~ 1)
+
+# Plot cumulative hazard
+plot(fit_coxsnell, fun = "cumhaz",
+     xlab = "Cox-Snell Residuals", ylab = "Cumulative Hazard",
+     main = "Cumulative Hazard of Cox-Snell Residuals")
+abline(0, 1, col = "red", lty = 3)  # Reference line for goodness-of-fit
 
 
 
-# cumulative hazard of cox-snell residuals
-surv.csr <- survfit(Surv(burn1.cs,burn1$D3)~1,
-                    type="fleming-harrington")
 
-plot(surv.csr, fun = "cumhaz")
-abline(a = 0, 
-       b = 1, 
-       col = "red")
-title("Cumulative Hazard of Cox-Snell Residuals")
+# Martingale residuals to assess nonlinearity
+martingale_residuals <- residuals(fit_refined, type = "martingale")
+linear_predictor <- predict(fit_refined, type = "lp")
 
-# martingale residual vs. predictor
-plot(burn1.preds, burn1.mart, 
-     xlab = "linear predictor", 
-     ylab = "Martingale Residual")
-text(burn1.preds, burn1.mart, labels = rownames(burn1))
-title("Martingale Residuals vs. Linear Predictor")
+plot(linear_predictor, martingale_residuals,
+     xlab = "Linear Predictor", ylab = "Martingale Residuals",
+     main = "Martingale Residuals vs. Linear Predictor")
+abline(h = 0, col = "red", lty = 2)
+text(linear_predictor, martingale_residuals,
+     labels = 1:length(linear_predictor),  # Observation numbers as labels
+     pos = 4, cex = 0.7, col = "black")    # Adjust position, size, and color
 
 
-# deviance vs. predictor
-plot(burn1.preds, burn1.dev, 
-     xlab = "linear predictor", ylab = "Deviance Residual")
-text(burn1.preds, burn1.dev, labels = rownames(burn1))
-title("Deviance Residuals vs. Linear Predictor")
 
-# dfbeta vs. observation order
-par(mfrow = c(2, 2))
+# Deviance residuals to detect outliers
+deviance_residuals <- residuals(fit_refined, type = "deviance")
 
-plot1A <- function() {
-  plot(burn1.dfb[,1], xlab = "Observation Number",
-       ylab = "dfbeta for Treatment Type")
-  text(burn1.dfb[,1], labels = rownames(burn1))
-  title("dfbeta Values for Treatment Type")
+plot(linear_predictor, deviance_residuals,
+     xlab = "Linear Predictor", ylab = "Deviance Residuals",
+     main = "Deviance Residuals vs. Linear Predictor")
+abline(h = 0, col = "red", lty = 2)
+text(linear_predictor, deviance_residuals,
+     labels = 1:length(linear_predictor),  # Observation numbers as labels
+     pos = 4, cex = 0.7, col = "black")    # Adjust position, size, and color
+
+
+
+
+
+# DFBETA values to check for influential observations
+dfbeta_values <- residuals(fit_refined, type = "dfbeta")
+# Extract covariate names from the model
+covariate_names <- names(coef(fit_refined))
+# Assign column names to dfbeta_values
+colnames(dfbeta_values) <- covariate_names
+# Plot DFBETA values by observation order for each covariate
+par(mfrow = c(2, 2))  # Set up a 2x2 plotting grid
+for (i in 1:ncol(dfbeta_values)) {
+  # Plot DFBETA values
+  plot(dfbeta_values[, i], 
+       xlab = "Observation", ylab = "DFBETA",
+       main = paste("DFBETA for", colnames(dfbeta_values)[i]))  # Customize points
+  
+  # Add reference line at 0
+  abline(h = 0, col = "red", lty = 2)
+  
+  # Label each point with its observation number
+  text(1:nrow(dfbeta_values), dfbeta_values[, i], 
+       labels = 1:nrow(dfbeta_values), pos = 4, cex = 0.6, col = "black")
 }
 
-plot1A()
-
-plot2A <- function() {
-  plot(burn1.dfb[,2], xlab = "Observation Number",
-       ylab = "dfbeta for Gender Type")
-  text(burn1.dfb[,2], labels = rownames(burn1))
-  title("dfbeta Values for Gender Type")
-}
-
-plot2A()
-
-plot3A <- function() {
-  plot(burn1.dfb[,3], xlab = "Observation Number",
-       ylab = "dfbeta for Race Type")
-  text(burn1.dfb[,3], labels = rownames(burn1))
-  title("dfbeta Values for Race Type")
-}
-
-plot3A()
-
-plot4A <- function() {
-  plot(burn1.dfb[,4], xlab = "Observation Number",
-       ylab = "dfbeta for Burn Type")
-  text(burn1.dfb[,4], labels = rownames(burn1))
-  title("dfbeta Values for Burn Type")
-}
-
-plot4A()
-
+# identify interesting observations
 
 
