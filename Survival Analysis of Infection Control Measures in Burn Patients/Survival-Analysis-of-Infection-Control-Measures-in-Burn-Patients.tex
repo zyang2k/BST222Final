@@ -78,9 +78,6 @@ Patients}
 } \fi
 
 \bigskip
-\begin{abstract}
-TBD
-\end{abstract}
 
 \noindent%
  
@@ -103,26 +100,103 @@ to infection. The dataset, originally published by Ichida \emph{et al.}
 (1993), provides data on infection times, patient characteristics, and
 clinical interventions \citep{ichida_evaluation_1993}.
 
-Survival analysis accommodates both censored observations (patients who
-do not develop infections during the study) and the timing of events. In
-particular, to highlight differences in infection-free survival between
-patients receiving routine bathing and those undergoing total body
-washing, the Kaplan-Meier estimator was used
-\citep{kaplan_nonparametric_1958}.
+To highlight differences in infection-free survival between patients
+receiving routine bathing and those undergoing total body washing, the
+Kaplan-Meier estimator was used \citep{kaplan_nonparametric_1958}.
 
-To further identify factors influencing infection risk, we use the Cox
-proportional hazards model \citep{cox1972}. This model evaluates the
-relationship between various predictors---such as patient gender, burn
-characteristics, and clinical treatments---and the likelihood of
-infection over time. Both time-independent covariates (e.g.~patient
+To further identify factors influencing infection risk,the Cox Model was
+used \citep{cox1972}. Both time-independent covariates (e.g.~patient
 gender, race) and time-dependent covariates (e.g.~surgical excision of
 burn tissue, prophylactic antibiotic treatment) are employed for a
-comprehensive analysis of infection dynamics.
+comprehensive analysis of \emph{Staphylococcus aureus} infection on burn
+patients.
 
 This report aims to present a clear and actionable evaluation of the
 infection control measures through the lens of survival analysis, with
 insights that inform clinical decision-making and contribute to better
 patient care.
+
+\section{Results and Discussion}\label{results-and-discussion}
+
+\subsection{Kaplan-Meier Analysis}\label{kaplan-meier-analysis}
+
+Fig. 1 highlights differences in infection-free survival between routine
+care and antimicrobial cleansing. After 30 days, 76\% of patients in the
+cleansing group remained infection-free compared to 66\% in the routine
+care group. By the end of the study, 70\% of cleansing patients remained
+infection-free, versus 30\% in the routine care group. Nelson-Aalen
+curves confirmed these trends, showing slightly higher infection-free
+percentages for both groups. Furthermore, The log-rank test supports
+this difference with (\(\chi^2 = 3.8\), \(p = 0.05\)). Patients in the
+antimicrobial cleansing group had fewer observed infections (20) than
+expected (26.6), while those in the routine care group experienced more
+infections (28) than expected (21.4).
+
+These results suggest that antimicrobial cleansing offers a protective
+benefit in reducing infection risks, highlighting its potential as an
+effective intervention for burn patients.
+
+\subsection{Cox Proportional Hazards
+Model}\label{cox-proportional-hazards-model}
+
+The constructed final model was determined to include Treatment, Race,
+and the time-dependent covariate surgical excision, as these variables
+demonstrated clinical relevance and statistical significance.
+
+Patients who received antimicrobial cleansing were 40.4\% less likely to
+develop an infection compared to those who received routine care (p =
+0.082). While this result was not statistically significant, it suggests
+a potential protective effect of a cleansing against
+\emph{Staphylococcus aureus} infection. White patients were
+significantly more likely to develop an infection compared to non-White
+patients, with an 8.86-fold higher likelihood of infection (p = 0.031).
+The wide confidence interval (95\% CI: 1.22--64.34) for this result
+reflects some uncertainty, likely due to variability or a smaller sample
+size (n = 154). Finally, surgical excision was associated with a 60\%
+lower likelihood of infection (p = 0.059 ), indicating a marginally
+significant effect.
+
+Overall, the model demonstrated good predictive performance, with a
+concordance index of 0.696, meaning it correctly predicted the order of
+infection risk in approximately 70\% of cases. The likelihood ratio test
+confirmed the statistical significance of the model as a whole (p =
+0.0004).
+
+\subsection{Residual Analysis}\label{residual-analysis}
+
+\subsubsection{Deviance Residuals}\label{deviance-residuals}
+
+The analysis of deviance residuals revealed several cases where the
+observed time to infection deviated significantly from the model's
+predictions. A positive deviance residual indicates that the infection
+occurred later than predicted. To be specific, observation 214 is a
+non-white male with 20\% burns involving trunk who received cleansing
+care and had a deviance residual of 2.769.
+
+Observation 70 is a white female patient with 36\% burns involving the
+trunk and lower legs who underwent surgical excision and received
+antibiotic treatment, yet had a deviance residual of -2.124. Observation
+160 is a male patient with 5\% burns to the trunk and lower legs who
+received surgical excision but no antibiotics, with a deviance residual
+of -2.740. Both observation 118 and 160
+
+Observations About Respiratory Tract Burns Patients with respiratory
+tract burns show an interesting trend toward prolonged infection-free
+survival. For instance, observation 214, a male patient with burns
+classified as ``Flame,'' involving the trunk and respiratory tract,
+received antimicrobial cleansing and had a deviance residual of 2.769.
+This suggests that infection occurred much later than predicted. The
+apparent resilience of patients with respiratory tract burns could
+indicate a different response to infection risk compared to skin burns
+alone. However, the limited number of cases with respiratory burns in
+this dataset restricts drawing definitive conclusions.
+
+DFBETA values measure the influence of individual observations on the
+model's coefficients. Large DFBETA values indicate that a specific
+observation has a strong effect on a particular predictor. \# Conclusion
+Provide actionable recommendations based on the analysis.
+
+\section{Appendices}\label{appendices}
 
 \section{Data Description}\label{data-description}
 
@@ -242,7 +316,7 @@ log-transformed time to assess if the ratio of hazard rates between two
 treatment groups remains constant over time.
 
 \subsection{\texorpdfstring{\textbf{Cox Proportional Hazards
-Model}}{Cox Proportional Hazards Model}}\label{cox-proportional-hazards-model}
+Model}}{Cox Proportional Hazards Model}}\label{cox-proportional-hazards-model-1}
 
 \subsubsection{\texorpdfstring{\textbf{Model with Time-Independent
 Covariates}}{Model with Time-Independent Covariates}}\label{model-with-time-independent-covariates}
@@ -305,69 +379,22 @@ while deviations suggested potential inadequacies.
 \subsubsection{\texorpdfstring{\textbf{Outlier
 Analysis}}{Outlier Analysis}}\label{outlier-analysis}
 
-Martingale residuals and deviance residuals were plotted against the
-linear predictor to assess nonlinearity and detect possible outliers in
-the model.
+Residual analysis was performed to evaluate how well the Cox model
+aligned with the observed data and to identify unusual observations. Two
+types of residuals -- deviance residuals and DFBETA values -- were
+analyzed.
 
-\subsubsection{\texorpdfstring{\textbf{Influential
-Observations}}{Influential Observations}}\label{influential-observations}
+Deviance residuals are derived from martingale residuals and measure how
+much an individual's observed time to infection deviates from the
+model's prediction, with positive values indicating later-than-expected
+infections.
 
-DFBETA values were plotted to identify leverage points, indicating
-observations that had a disproportionately large influence on the
-estimated coefficients.
+DFBETA values measure the influence of individual observations on the
+model's coefficients. Large DFBETA values indicate that a specific
+observation has a strong effect on a particular predictor.
 
-\subsection{\texorpdfstring{\textbf{Final Model
-Selection}}{Final Model Selection}}\label{final-model-selection}
-
-TBD
-
-\section{Results}\label{results}
-
-\subsection{Kaplan-Meier Analysis}\label{kaplan-meier-analysis}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Plot}: Survival curves for the two bathing methods (routine
-  vs.~antimicrobial).
-\item
-  \textbf{Log-rank test}: p-value for differences in survival times.
-\end{itemize}
-
-\subsection{Cox Proportional Hazards
-Model}\label{cox-proportional-hazards-model-1}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Significant covariates}: Report hazard ratios, confidence
-  intervals, and p-values.
-\item
-  \textbf{Interpretation}: Discuss the clinical meaning of these
-  results.
-\end{itemize}
-
-\subsection{Time-Dependent Predictors}\label{time-dependent-predictors}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Surgical excision and antibiotics}: Analyze their time-varying
-  effects on infection risk.
-\end{itemize}
-
-\section{Discussion}\label{discussion}
-
-Summarize findings and their clinical implications. Discuss limitations
-and future research directions.
-
-\section{Conclusion}\label{conclusion}
-
-Provide actionable recommendations based on the analysis.
-
-\section{Appendices}\label{appendices}
-
-Include additional plots, diagnostic checks, and R code if necessary.
+Using thresholds based on two standard deviations from the mean for each
+residual type, observations were flagged as unusual.
 
 \bibliographystyle{plain}
 \bibliography{bibliography.bib}

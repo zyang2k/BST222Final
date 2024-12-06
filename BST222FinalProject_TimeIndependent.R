@@ -30,14 +30,16 @@ burn1 <- burn1[, -c(2:12)]
 ################## KM and NA surv ###############################
 
 # Create the survival object
+par(mfrow = c(1, 1))
 burn1.surv <- Surv(burn1$T3, burn1$D3)
-
+surv_diff <- survdiff(burn1.surv ~ Treatment, data = burn1)
+surv_diff
 # Fit KM and NA curves
 KMcurves <- survfit(burn1.surv ~ Treatment, data = burn1)
 NAcurves <- survfit(burn1.surv ~ Treatment, type = "fleming-harrington", data = burn1)
 
 # Plot the KM curves
-plot(KMcurves, col = c("black", "red"), lwd = 2, lty = 1, xlab = "Time", ylab = "Survival Probability", 
+plot(KMcurves, col = c("black", "red"), lwd = 2, lty = 1, xlab = "Time (days)", ylab = "Percent Infection-free", 
      main = "KM and NA Survival Curves for Two Types of Treatment")
 
 # Add the NA curves
@@ -68,45 +70,33 @@ fit_independent <- coxph(burn1.surv ~ Treatment + Gender + Race + PercentBurned 
                            SiteUpperLeg + SiteLowerLeg + SiteRespTract, 
                          data = burn1)
 
-fit_stratified <- coxph(burn1.surv ~ Treatment + Gender + Race + PercentBurned + 
-                          SiteHead + SiteButtock + SiteTrunk +
-                          SiteUpperLeg + SiteLowerLeg + strata(SiteRespTract),
-                        data = burn1)
-
-
 ################## Cox Model ###############################
 # Summarize the model
 summary(fit_independent)
-summary(fit_stratified)
+
 
 # Check proportional hazards assumption
 cox.zph(fit_independent)
-cox.zph(fit_stratified)
-# seems to me that in the unstratified model, SiteRespTract violated the PH assumption 
+
+# assumption holds
 
 
 # Plot Schoenfeld residuals to assess proportional hazards assumption
 plot(cox.zph(fit_independent))
-plot(cox.zph(fit_stratified))
 # schoenfeld residual not look too bad
 
 # compare 2 models
-anova(fit_independent, fit_stratified, test = "LRT")
-AIC(fit_independent, fit_stratified)
+AIC(fit_independent)
 
 # stratified better
 
 # use drop1 to test which to drop
-drop1(fit_stratified, test = "Chisq")
+drop1(fit_independent, test = "Chisq")
 
 # drop 1 result indicate a only treatment and race matters, multicliearity? 
 
-# check for multicolinearity
-vif(fit_stratified)
-# no significant multicoliearity was detected
-
-# use stratified, drop unsignificant variables
-fit_refined <- coxph(burn1.surv ~ Treatment + Gender + Race + strata(SiteRespTract), 
+# use independent, drop unsignificant variables
+fit_refined <- coxph(burn1.surv ~ Treatment + Gender + Race,
                      data = burn1)
 summary(fit_refined)
 

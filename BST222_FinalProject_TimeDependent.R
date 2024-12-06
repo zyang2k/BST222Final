@@ -48,36 +48,45 @@ burn2.surv <- with(burn2, Surv(time = tstart, time2 = tstop, event = status, typ
 # View the resulting dataset
 head(burn2)
 
-# Fit the Cox model with time-dependent covariates
+################## Fit Cox Models ################################
+
+# Fit 4 cox models  with or w/o each time-dependent covariates
+fit_time_indep <- coxph(burn2.surv ~ Treatment + Gender + Race, data = burn2)
 fit_time_dep <- coxph(burn2.surv ~ Treatment + Gender + Race + surgical + antibiotics, data = burn2)
+fit_time_dep_sur <- coxph(burn2.surv ~ Treatment + Gender + Race + surgical, data = burn2)
+fit_time_dep_anti <- coxph(burn2.surv ~ Treatment + Gender + Race  + antibiotics, data = burn2)
 
-# Summarize the results
-summary(fit_time_dep)
-
+AIC(fit_time_indep, fit_time_dep, fit_time_dep_sur, fit_time_dep_anti)
+drop1(fit_time_indep, test = "Chisq")
 drop1(fit_time_dep, test = "Chisq")
-vif(fit_time_dep)
+drop1(fit_time_dep_sur, test = "Chisq")
+drop1(fit_time_dep_anti, test = "Chisq")
+
+# only retain surgical as time dependent variable
+
+# final model: fit_time_dep_sur
+fit_time_dep_sur <- coxph(burn2.surv ~ Treatment + Race + surgical, data = burn2)
 
 
 ################## Model Checking ###############################
 
 
 # Schoenfeld residuals
-cox_zph <- cox.zph(fit_time_dep)
+cox_zph <- cox.zph(fit_time_dep_sur)
 
-par(mfrow = c(2, 3)) 
+par(mfrow = c(2, 2)) 
 plot(cox_zph[1], main = "Schoenfeld Residuals for Treatment")
 plot(cox_zph[2], main = "Schoenfeld Residuals for Gender")
 plot(cox_zph[3], main = "Schoenfeld Residuals for Race")
 plot(cox_zph[4], main = "Schoenfeld Residuals for surgical")
-plot(cox_zph[5], main = "Schoenfeld Residuals for antibiotics")
 
 
 
 par(mfrow = c(1, 1))
 
 # Martingale residuals
-martingale_residuals <- residuals(fit_time_dep, type = "martingale")
-linear_predictor <- predict(fit_time_dep, type = "lp")
+martingale_residuals <- residuals(fit_time_dep_sur, type = "martingale")
+linear_predictor <- predict(fit_time_dep_sur, type = "lp")
 
 plot(linear_predictor, martingale_residuals,
      xlab = "Linear Predictor", ylab = "Martingale Residuals",
@@ -87,7 +96,7 @@ text(linear_predictor, martingale_residuals,
      labels = 1:length(linear_predictor), pos = 4, cex = 0.6)
 
 # Deviance residuals
-deviance_residuals <- residuals(fit_time_dep, type = "deviance")
+deviance_residuals <- residuals(fit_time_dep_sur, type = "deviance")
 
 plot(linear_predictor, deviance_residuals,
      xlab = "Linear Predictor", ylab = "Deviance Residuals",
@@ -100,7 +109,7 @@ text(linear_predictor, deviance_residuals,
 
 
 # Cox-Snell Residuals: Assess Goodness of Fit
-cox_snell_residuals <- -log(survfit(fit_time_dep)$surv)  # Compute Cox-Snell residuals
+cox_snell_residuals <- -log(survfit(fit_time_dep_sur)$surv)  # Compute Cox-Snell residuals
 cox_snell_residuals <- cox_snell_residuals[1:length(burn2$status)]  # Match length to data
 
 # Create a survival object for Cox-Snell residuals
@@ -118,8 +127,8 @@ abline(0, 1, col = "red", lty = 3)  # Reference line for goodness-of-fit
 
 
 # dfbeta
-par(mfrow = c(2, 3))
-dfbeta <- residuals(fit_time_dep, type = "dfbeta")
+par(mfrow = c(2, 2))
+dfbeta <- residuals(fit_time_dep_sur, type = "dfbeta")
 
 covariate_names <- c("Treatment", "Gender", "Race", "surgical", "antibiotics")
 
@@ -140,16 +149,87 @@ for (i in 1:5) {
 ########### Questions ###########
 
 # shall i use time dependent covariates? no improvement in AIC
-# > AIC(fit_independent, fit_stratified, fit_refined, fit_time_dep)
+
+### examine TD variables individually
+
+# > AIC(fit_independent, fit_refined, fit_time_dep)
 # df      AIC
 # fit_independent 10 438.5335
-# fit_stratified   9 376.4142
 # fit_refined      3 367.8405
 # fit_time_dep     5 427.9481
 
 # how to adjust for colinearity? Does drop1 handle colinearity?
+# construct model with each TD variable and do drop1.
+# 4 models 
+# 1. no td var
+# 2. td var 1
+# 3. td var 2
+# 4. tdvar 1, 2
 
 # other ways to assess goodness of fit other than cox-snell?
+# check assumptions is the most important
+# check general assumption if violated
+
 
 # language in final report? is current ok?
+
+# outliers -- patient covariant -- report to burn surgon -- 
+
+# seperate 
+
+
+
+# Martingale residuals
+martingale_residuals <- residuals(fit_time_dep_sur, type = "martingale")
+
+# Deviance residuals
+deviance_residuals <- residuals(fit_time_dep_sur, type = "deviance")
+
+# Linear predictor (log hazard)
+linear_predictor <- predict(fit_time_dep_sur, type = "lp")
+
+# Identify extreme deviance residuals (e.g., threshold > 2 standard deviations)
+threshold_dev <- 2 * sd(deviance_residuals)
+extreme_deviance <- which(abs(deviance_residuals) > threshold_dev)
+
+# Identify extreme martingale residuals (e.g., threshold > 2 standard deviations)
+threshold_mart <- 2 * sd(martingale_residuals)
+extreme_martingale <- which(abs(martingale_residuals) > threshold_mart)
+
+# DFBETA values for each predictor
+dfbeta_values <- residuals(fit_time_dep_sur, type = "dfbeta")
+
+# Identify extreme DFBETA values (threshold > 2 standard deviations for any predictor)
+threshold_dfbeta <- apply(dfbeta_values, 2, function(x) 2 * sd(x))
+extreme_dfbeta <- which(apply(abs(dfbeta_values), 1, function(x) any(x > threshold_dfbeta)))
+
+
+# Define a function to extract rows for any residual type
+extract_extreme <- function(dataset, indices) {
+  indices <- unique(indices)  # Ensure no duplicates
+  return(dataset[indices, ])
+}
+
+# Apply the function for martingale, deviance, and DFBETA residuals
+extreme_martingale_data <- extract_extreme(burn2, extreme_martingale)
+extreme_deviance_data <- extract_extreme(burn2, extreme_deviance)
+extreme_dfbeta_data <- extract_extreme(burn2, extreme_dfbeta)
+
+
+
+
+# Martingale Residuals
+extreme_martingale_values <- martingale_residuals[extreme_martingale]  # Extract values
+extreme_martingale_data <- burn2[extreme_martingale, ]                 # Extract rows
+extreme_martingale_data$Martingale <- extreme_martingale_values        # Add as new column
+
+# Deviance Residuals
+extreme_deviance_values <- deviance_residuals[extreme_deviance]        # Extract values
+extreme_deviance_data <- burn2[extreme_deviance, ]                    # Extract rows
+extreme_deviance_data$Deviance <- extreme_deviance_values             # Add as new column
+
+# DFBETA Values
+extreme_dfbeta_values <- dfbeta_values[extreme_dfbeta, ]              # Extract values (matrix)
+extreme_dfbeta_data <- burn2[extreme_dfbeta, ]                        # Extract rows
+extreme_dfbeta_data <- cbind(extreme_dfbeta_data, extreme_dfbeta_values)  # Add all DFBETA columns
 
