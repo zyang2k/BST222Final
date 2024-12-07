@@ -1,0 +1,28 @@
+\begin{thebibliography}{1}
+
+\bibitem{cox1972}
+David~R. Cox.
+\newblock Regression models and life-tables.
+\newblock {\em Journal of the Royal Statistical Society. Series B
+  (Methodological)}, 34(2):187--220, 1972.
+
+\bibitem{ichida_evaluation_1993}
+J.~M. Ichida, J.~T. Wassell, M.~D. Keller, and L.~W. Ayers.
+\newblock Evaluation of protocol change in burn‐care management using the
+  {Cox} proportional hazards model with time‐dependent covariates.
+\newblock {\em Statistics in Medicine}, 12(3-4):301--310, February 1993.
+
+\bibitem{kaplan_nonparametric_1958}
+E.~L. Kaplan and Paul Meier.
+\newblock Nonparametric {Estimation} from {Incomplete} {Observations}.
+\newblock {\em Journal of the American Statistical Association},
+  53(282):457--481, June 1958.
+
+\bibitem{norbury_infection_2016}
+William Norbury, David~N. Herndon, Jessica Tanksley, Marc~G. Jeschke,
+  Celeste~C. Finnerty, and {on Behalf of the Scientific Study Committee of the
+  Surgical Infection Society}.
+\newblock Infection in {Burns}.
+\newblock {\em Surgical Infections}, 17(2):250--255, April 2016.
+
+\end{thebibliography}

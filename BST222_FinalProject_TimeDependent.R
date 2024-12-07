@@ -33,20 +33,15 @@ burn1 <- burn1[, -c(2:12)]
 burn2 <- tmerge(data1 = burn1, data2 = burn1, id = Obs, 
                 tstop = T3, infection = event(T3, D3))
 
-# Add surgical excision (T1) as a time-dependent covariate
 burn2 <- tmerge(burn2, burn1, id = Obs, surgical = tdc(T1))
-
-# Add antibiotic treatment (T2) as a time-dependent covariate
 burn2 <- tmerge(burn2, burn1, id = Obs, antibiotics = tdc(T2))
 
 # Define status to distinguish between the event and censoring
 burn2$status <- as.integer(with(burn2, (tstop == T3 & D3 == 1)))
 
-# Ensure the dataset is in the counting process format
+# Create the survival object
 burn2.surv <- with(burn2, Surv(time = tstart, time2 = tstop, event = status, type = "counting"))
 
-# View the resulting dataset
-head(burn2)
 
 ################## Fit Cox Models ################################
 
@@ -73,12 +68,11 @@ fit_time_dep_sur <- coxph(burn2.surv ~ Treatment + Race + surgical, data = burn2
 
 # Schoenfeld residuals
 cox_zph <- cox.zph(fit_time_dep_sur)
-
-par(mfrow = c(2, 2)) 
-plot(cox_zph[1], main = "Schoenfeld Residuals for Treatment")
-plot(cox_zph[2], main = "Schoenfeld Residuals for Gender")
-plot(cox_zph[3], main = "Schoenfeld Residuals for Race")
-plot(cox_zph[4], main = "Schoenfeld Residuals for surgical")
+cox_zph
+par(mfrow = c(2, 2))
+plot(cox_zph[1], main = "Schoenfeld for Treatment")
+plot(cox_zph[2], main = "Schoenfeld for Race")
+plot(cox_zph[3], main = "Schoenfeld for surgical")
 
 
 
@@ -188,48 +182,73 @@ deviance_residuals <- residuals(fit_time_dep_sur, type = "deviance")
 # Linear predictor (log hazard)
 linear_predictor <- predict(fit_time_dep_sur, type = "lp")
 
-# Identify extreme deviance residuals (e.g., threshold > 2 standard deviations)
-threshold_dev <- 2 * sd(deviance_residuals)
-extreme_deviance <- which(abs(deviance_residuals) > threshold_dev)
-
-# Identify extreme martingale residuals (e.g., threshold > 2 standard deviations)
-threshold_mart <- 2 * sd(martingale_residuals)
-extreme_martingale <- which(abs(martingale_residuals) > threshold_mart)
-
 # DFBETA values for each predictor
 dfbeta_values <- residuals(fit_time_dep_sur, type = "dfbeta")
 
-# Identify extreme DFBETA values (threshold > 2 standard deviations for any predictor)
-threshold_dfbeta <- apply(dfbeta_values, 2, function(x) 2 * sd(x))
-extreme_dfbeta <- which(apply(abs(dfbeta_values), 1, function(x) any(x > threshold_dfbeta)))
 
 
-# Define a function to extract rows for any residual type
-extract_extreme <- function(dataset, indices) {
-  indices <- unique(indices)  # Ensure no duplicates
-  return(dataset[indices, ])
+# Ensure the lengths match before adding
+if (nrow(burn2) == length(martingale_residuals)) {
+  
+  # Add residuals to the dataset
+  burn2$Martingale <- martingale_residuals
+  burn2$Deviance <- deviance_residuals
+  burn2$LinearPredictor <- linear_predictor
+  
+  # DFBETA is a matrix; add each column as a separate variable
+  dfbeta_names <- colnames(dfbeta_values)
+  for (i in seq_along(dfbeta_names)) {
+    burn2[[paste0("DFBETA_", dfbeta_names[i])]] <- dfbeta_values[, i]
+  }
+  
+  # View the updated dataset
+  head(burn2)
+} else {
+  stop("Length of residuals does not match the number of rows in burn2.")
 }
 
-# Apply the function for martingale, deviance, and DFBETA residuals
-extreme_martingale_data <- extract_extreme(burn2, extreme_martingale)
-extreme_deviance_data <- extract_extreme(burn2, extreme_deviance)
-extreme_dfbeta_data <- extract_extreme(burn2, extreme_dfbeta)
+
+View(burn2)
+
+
+
+# Assuming burn2 has columns for residuals, surgical, and antibiotics
+library(knitr)
+
+# Add deviance residuals to the burn2 dataset
+burn2$Deviance <- deviance_residuals
+
+# Define the threshold for extreme deviance residuals (e.g., absolute value > 2)
+threshold <- 2
+
+# Filter patients with extreme deviance residuals
+extreme_table <- burn2[abs(burn2$Deviance) > threshold, ]
+
+# Select relevant columns including surgical and antibiotic care
+extreme_table <- extreme_table[, c("Obs", "Gender", "Race", "PercentBurned", 
+                                   "Treatment", "surgical", "antibiotics", "Deviance")]
+
+# Create a kable table
+kable(extreme_table, 
+      caption = "Table 1: Patient Characteristics with Extreme Deviance Residuals",
+      col.names = c("Observation", "Gender", "Race", "Burn Percentage", 
+                    "Treatment Type", "Surgical Care", "Antibiotic Care", "Deviance Residual"),
+      format = "html",  # For better styling in HTML output
+      align = "c")
 
 
 
 
-# Martingale Residuals
-extreme_martingale_values <- martingale_residuals[extreme_martingale]  # Extract values
-extreme_martingale_data <- burn2[extreme_martingale, ]                 # Extract rows
-extreme_martingale_data$Martingale <- extreme_martingale_values        # Add as new column
+threshold <- 2 / sqrt(nrow(dfbeta_values))
+extreme_influential <- which(apply(abs(dfbeta_values), 1, max) > threshold)
 
-# Deviance Residuals
-extreme_deviance_values <- deviance_residuals[extreme_deviance]        # Extract values
-extreme_deviance_data <- burn2[extreme_deviance, ]                    # Extract rows
-extreme_deviance_data$Deviance <- extreme_deviance_values             # Add as new column
 
-# DFBETA Values
-extreme_dfbeta_values <- dfbeta_values[extreme_dfbeta, ]              # Extract values (matrix)
-extreme_dfbeta_data <- burn2[extreme_dfbeta, ]                        # Extract rows
-extreme_dfbeta_data <- cbind(extreme_dfbeta_data, extreme_dfbeta_values)  # Add all DFBETA columns
+
+par(mfrow = c(1, 3))  # Adjust based on the number of predictors
+for (i in 1:ncol(dfbeta_values)) {
+  plot(dfbeta_values[, i], main = paste("DFBETA for Predictor", i),
+       xlab = "Observation", ylab = "DFBETA")
+  abline(h = c(-threshold, threshold), col = "red", lty = 2)  # Add threshold lines
+  points(extreme_influential, dfbeta_values[extreme_influential, i], col = "blue", pch = 19)
+}
 

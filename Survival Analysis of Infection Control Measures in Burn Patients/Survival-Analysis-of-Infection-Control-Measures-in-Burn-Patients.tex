@@ -24,6 +24,47 @@
 %% load any required packages here
 
 
+% Pandoc syntax highlighting
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 
 % tightlist command for lists without linebreak
 \providecommand{\tightlist}{%
@@ -126,8 +167,43 @@ cleansing group remained infection-free compared to 66\% in the routine
 care group. By the end of the study, 70\% of cleansing patients remained
 infection-free, versus 30\% in the routine care group. Nelson-Aalen
 curves confirmed these trends, showing slightly higher infection-free
-percentages for both groups. Furthermore, The log-rank test supports
-this difference with (\(\chi^2 = 3.8\), \(p = 0.05\)). Patients in the
+percentages for both groups. The survival curves do not cross,
+suggesting the relative risk between the two treatment groups remains
+constant over the period observed.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Plot the KM curves}
+\FunctionTok{plot}\NormalTok{(KMcurves, }\AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"black"}\NormalTok{, }\StringTok{"red"}\NormalTok{), }\AttributeTok{lwd =} \DecValTok{2}\NormalTok{, }\AttributeTok{lty =} \DecValTok{1}\NormalTok{, }\AttributeTok{xlab =} \StringTok{"Time (days)"}\NormalTok{, }\AttributeTok{ylab =} \StringTok{"Percent Infection{-}free"}\NormalTok{, }
+     \AttributeTok{main =} \StringTok{"KM and NA Survival Curves for Two Types of Treatment"}\NormalTok{)}
+
+\CommentTok{\# Add the NA curves}
+\FunctionTok{lines}\NormalTok{(NAcurves, }\AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"black"}\NormalTok{, }\StringTok{"red"}\NormalTok{), }\AttributeTok{lwd =} \DecValTok{2}\NormalTok{, }\AttributeTok{lty =} \DecValTok{2}\NormalTok{)}
+
+\CommentTok{\# Add a legend}
+\FunctionTok{legend}\NormalTok{(}\StringTok{"bottomright"}\NormalTok{, }
+       \AttributeTok{legend =} \FunctionTok{c}\NormalTok{(}\StringTok{"Routine Care (KM)"}\NormalTok{, }\StringTok{"Cleansing (KM)"}\NormalTok{, }\StringTok{"Routine Care (NA)"}\NormalTok{, }\StringTok{"Cleansing (NA)"}\NormalTok{),}
+       \AttributeTok{col =} \FunctionTok{c}\NormalTok{(}\StringTok{"black"}\NormalTok{, }\StringTok{"red"}\NormalTok{, }\StringTok{"black"}\NormalTok{, }\StringTok{"red"}\NormalTok{), }
+       \AttributeTok{lty =} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{2}\NormalTok{), }
+       \AttributeTok{lwd =} \DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\centering
+\includegraphics{Survival-Analysis-of-Infection-Control-Measures-in-Burn-Patients_files/figure-latex/fig1-1.pdf}
+\caption{Fig. 1}
+\end{figure}
+
+Figure 1. Kaplan-Meier and Nelson-Aalen Survival Curves. Both KM (solid
+line) and NA (dashed line) curves illustrates the proportion of patients
+remaining infection-free over time for routine care (black) and
+antimicrobial cleansing groups (red). Patients receiving antimicrobial
+cleansing consistently showed higher infection-free survival rates
+compared to routine care throughout the study.
+
+Furthermore, The log-rank test supports this difference with
+(\(\chi^2 = 3.8\), and a boarderline p-value of 0.05. Patients in the
 antimicrobial cleansing group had fewer observed infections (20) than
 expected (26.6), while those in the routine care group experienced more
 infections (28) than expected (21.4).
@@ -141,26 +217,50 @@ Model}\label{cox-proportional-hazards-model}
 
 The constructed final model was determined to include Treatment, Race,
 and the time-dependent covariate surgical excision, as these variables
-demonstrated clinical relevance and statistical significance.
+demonstrated statistical significance and clinical relevance.
 
 Patients who received antimicrobial cleansing were 40.4\% less likely to
 develop an infection compared to those who received routine care (p =
-0.082). While this result was not statistically significant, it suggests
-a potential protective effect of a cleansing against
-\emph{Staphylococcus aureus} infection. White patients were
-significantly more likely to develop an infection compared to non-White
-patients, with an 8.86-fold higher likelihood of infection (p = 0.031).
-The wide confidence interval (95\% CI: 1.22--64.34) for this result
-reflects some uncertainty, likely due to variability or a smaller sample
-size (n = 154). Finally, surgical excision was associated with a 60\%
-lower likelihood of infection (p = 0.059 ), indicating a marginally
-significant effect.
+0.082). While this result was not statistically significant in this
+model, it suggests a potential protective effect of a cleansing against
+\emph{Staphylococcus aureus} infection that needs to be further
+validated. White patients were significantly more likely to develop an
+infection compared to non-White patients, with an 8.86-fold higher
+likelihood of infection (p = 0.031). The wide confidence interval (95\%
+CI: 1.22--64.34) for this result reflects uncertainty, likely due to the
+small sample size (n = 154). Finally, surgical excision was associated
+with a 60\% lower likelihood of infection (p = 0.059), indicating a
+marginal significant effect.
 
-Overall, the model demonstrated good predictive performance, with a
+Overall, the cox model demonstrated good predictive performance, with a
 concordance index of 0.696, meaning it correctly predicted the order of
-infection risk in approximately 70\% of cases. The likelihood ratio test
-confirmed the statistical significance of the model as a whole (p =
+infection risk in approximately 69.6\% of cases. The likelihood ratio
+test confirmed the statistical significance of the model as a whole (p =
 0.0004).
+
+\begin{verbatim}
+## Call:
+## coxph(formula = burn2.surv ~ Treatment + Race + surgical, data = burn2)
+## 
+##   n= 288, number of events= 48 
+## 
+##                       coef exp(coef) se(coef)      z Pr(>|z|)  
+## TreatmentCleansing -0.4843    0.6161   0.2967 -1.632   0.1026  
+## RaceWhite           2.1939    8.9703   1.0117  2.169   0.0301 *
+## surgical           -1.0039    0.3664   0.4834 -2.077   0.0378 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+##                    exp(coef) exp(-coef) lower .95 upper .95
+## TreatmentCleansing    0.6161     1.6230    0.3444    1.1021
+## RaceWhite             8.9703     0.1115    1.2349   65.1589
+## surgical              0.3664     2.7290    0.1421    0.9451
+## 
+## Concordance= 0.672  (se = 0.036 )
+## Likelihood ratio test= 18.4  on 3 df,   p=4e-04
+## Wald test            = 12.62  on 3 df,   p=0.006
+## Score (logrank) test = 14.72  on 3 df,   p=0.002
+\end{verbatim}
 
 \subsection{Residual Analysis}\label{residual-analysis}
 
@@ -169,32 +269,49 @@ confirmed the statistical significance of the model as a whole (p =
 The analysis of deviance residuals revealed several cases where the
 observed time to infection deviated significantly from the model's
 predictions. A positive deviance residual indicates that the infection
-occurred later than predicted. To be specific, observation 214 is a
-non-white male with 20\% burns involving trunk who received cleansing
-care and had a deviance residual of 2.769.
+occurred later than predicted and vice versa.
 
-Observation 70 is a white female patient with 36\% burns involving the
-trunk and lower legs who underwent surgical excision and received
-antibiotic treatment, yet had a deviance residual of -2.124. Observation
-160 is a male patient with 5\% burns to the trunk and lower legs who
-received surgical excision but no antibiotics, with a deviance residual
-of -2.740. Both observation 118 and 160
+To be specific, observation 65 is a while male with 85\% percent burns
+on head, buttock, trunk, upperleg, and respirtory track who received
+routine care and had a deviance residual of 2.36.
 
-Observations About Respiratory Tract Burns Patients with respiratory
-tract burns show an interesting trend toward prolonged infection-free
-survival. For instance, observation 214, a male patient with burns
-classified as ``Flame,'' involving the trunk and respiratory tract,
-received antimicrobial cleansing and had a deviance residual of 2.769.
-This suggests that infection occurred much later than predicted. The
-apparent resilience of patients with respiratory tract burns could
-indicate a different response to infection risk compared to skin burns
-alone. However, the limited number of cases with respiratory burns in
-this dataset restricts drawing definitive conclusions.
+Conversely, observation 15 is a white male with 20\% burns on head and
+trunk, and he received routine care and no excision surgery or
+antibodies. This patient had a deviance residual of -1.33, suggesting
+that the observed infection occurred earlier than the model would have
+predicted.
 
-DFBETA values measure the influence of individual observations on the
-model's coefficients. Large DFBETA values indicate that a specific
-observation has a strong effect on a particular predictor. \# Conclusion
-Provide actionable recommendations based on the analysis.
+Table 1 shows the patient characteristics of high deviance residual
+individuals (\textgreater2sd).
+
+In addition to deviance residual, DEBETA values were computed to measure
+influential observations. Large DFBETA values indicate that a specific
+observation has a strong effect on a particular predictor and may need
+further investigation.
+
+For example, observation 91 is a white male with 20\% burns, and he
+received cleansing care with both excision surgery and antibiotic
+treatment. This patient has a large influence on the time-dependent
+covariate coefficient \texttt{surgery} with a DFBETA value = 0.137.
+Additionally, observation 92 is a white male with 5\% burns, and he
+received cleansing care and excision surgery. This observation also has
+a large influence on the coefficient of \texttt{surgery} with a DEBETA
+value = 0.212. Interestingly, he also has a high deviance residual
+value.
+
+Table 1 shows the characistics of patients with a high DFBETA value.
+
+Since this is an association study instead of causal study so we failed
+to consider the confounder relationship and matching. We spend more
+effort on statical meaning for the prediction based on AIC based on
+their burn situation and demographics.
+
+\section{Conclusion}\label{conclusion}
+
+In conclusion, the risk of infection was 40.4\% lower in patients who
+received cleansing care, although not statistically significant. There
+was also some indication that excision surgery may be important for
+infection control.
 
 \section{Appendices}\label{appendices}
 
@@ -298,6 +415,21 @@ Type}}{Burn Type}}\label{burn-type}
 \subsection{\texorpdfstring{\textbf{Kaplan-Meier Survival
 Analysis}}{Kaplan-Meier Survival Analysis}}\label{kaplan-meier-survival-analysis}
 
+\begin{verbatim}
+## Call:
+## survdiff(formula = burn1.surv ~ Treatment, data = burn1)
+## 
+##                      N Observed Expected (O-E)^2/E (O-E)^2/V
+## Treatment=Routine   70       28     21.4      2.07      3.79
+## Treatment=Cleansing 84       20     26.6      1.66      3.79
+## 
+##  Chisq= 3.8  on 1 degrees of freedom, p= 0.05
+\end{verbatim}
+
+\includegraphics{Survival-Analysis-of-Infection-Control-Measures-in-Burn-Patients_files/figure-latex/unnamed-chunk-6-1.pdf}
+\includegraphics{Survival-Analysis-of-Infection-Control-Measures-in-Burn-Patients_files/figure-latex/unnamed-chunk-6-2.pdf}
+\includegraphics{Survival-Analysis-of-Infection-Control-Measures-in-Burn-Patients_files/figure-latex/unnamed-chunk-6-3.pdf}
+
 The Kaplan-Meier estimator was used to estimate and visualize the
 probability of remaining infection-free over time for patients
 undergoing either routine bathing or antimicrobial washing.
@@ -395,6 +527,36 @@ observation has a strong effect on a particular predictor.
 
 Using thresholds based on two standard deviations from the mean for each
 residual type, observations were flagged as unusual.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(knitr)}
+
+\CommentTok{\# Add deviance residuals to the burn2 dataset}
+\NormalTok{burn2}\SpecialCharTok{$}\NormalTok{Deviance }\OtherTok{\textless{}{-}}\NormalTok{ deviance\_residuals}
+
+\CommentTok{\# Define the threshold for extreme deviance residuals (e.g., absolute value \textgreater{} 2)}
+\NormalTok{threshold }\OtherTok{\textless{}{-}} \DecValTok{2}
+
+\CommentTok{\# Filter patients with extreme deviance residuals}
+\NormalTok{extreme\_table }\OtherTok{\textless{}{-}}\NormalTok{ burn2[}\FunctionTok{abs}\NormalTok{(burn2}\SpecialCharTok{$}\NormalTok{Deviance) }\SpecialCharTok{\textgreater{}}\NormalTok{ threshold, ]}
+
+\CommentTok{\# Select relevant columns including surgical and antibiotic care}
+\NormalTok{extreme\_table }\OtherTok{\textless{}{-}}\NormalTok{ extreme\_table[, }\FunctionTok{c}\NormalTok{(}\StringTok{"Obs"}\NormalTok{, }\StringTok{"Gender"}\NormalTok{, }\StringTok{"Race"}\NormalTok{, }\StringTok{"PercentBurned"}\NormalTok{, }
+                                   \StringTok{"Treatment"}\NormalTok{, }\StringTok{"surgical"}\NormalTok{, }\StringTok{"antibiotics"}\NormalTok{, }\StringTok{"Deviance"}\NormalTok{)]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{kable}\NormalTok{(extreme\_table, }
+      \AttributeTok{caption =} \StringTok{"Table 1: Patient Characteristics with Extreme Deviance Residuals"}\NormalTok{,}
+      \AttributeTok{col.names =} \FunctionTok{c}\NormalTok{(}\StringTok{"Observation"}\NormalTok{, }\StringTok{"Gender"}\NormalTok{, }\StringTok{"Race"}\NormalTok{, }\StringTok{"Burn Percentage"}\NormalTok{, }
+                    \StringTok{"Treatment Type"}\NormalTok{, }\StringTok{"Surgical Care"}\NormalTok{, }\StringTok{"Antibiotic Care"}\NormalTok{, }\StringTok{"Deviance Residual"}\NormalTok{),}
+      \AttributeTok{align =} \StringTok{"c"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
 
 \bibliographystyle{plain}
 \bibliography{bibliography.bib}

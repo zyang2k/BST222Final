@@ -13,9 +13,7 @@ header-includes:
 
 # Introduction
 
-
 Infection with *Staphylococcus aureus* is a critical concern in burn patients, often contributing to prolonged hospital stays, increased morbidity, and higher healthcare costs [@norbury_infection_2016]. Therefore, effective infection control measures are of great importance. This study investigates the impact of replacing routine bathing with total body washing using antimicrobial agents on infection risk, leveraging survival analysis techniques to rigorously evaluate the time to infection. The dataset, originally published by Ichida *et al.* (1993), provides data on infection times, patient characteristics, and clinical interventions [@ichida_evaluation_1993].
-
 
 To highlight differences in infection-free survival between patients receiving routine bathing and those undergoing total body washing, the Kaplan-Meier estimator was used [@kaplan_nonparametric_1958]. 
 
@@ -23,39 +21,130 @@ To further identify factors influencing infection risk,the Cox Model was used [@
 
 This report aims to present a clear and actionable evaluation of the infection control measures through the lens of survival analysis, with insights that inform clinical decision-making and contribute to better patient care.
 
-
-
 # Results and Discussion
 ## Kaplan-Meier Analysis
+```{r, include = FALSE}
+################## Data Cleaning ################################
+# load necessary libraries
+library(KMsurv)
+library(survival)
+library(MASS)
+library(car)
+library(knitr)
+library(dplyr)
 
-Fig. 1 highlights differences in infection-free survival between routine care and antimicrobial cleansing. After 30 days, 76% of patients in the cleansing group remained infection-free compared to 66% in the routine care group. By the end of the study, 70% of cleansing patients remained infection-free, versus 30% in the routine care group. Nelson-Aalen curves confirmed these trends, showing slightly higher infection-free percentages for both groups. 
-Furthermore, The log-rank test supports this difference with (\( \chi^2 = 3.8 \), \( p = 0.05 \)). Patients in the antimicrobial cleansing group had fewer observed infections (20) than expected (26.6), while those in the routine care group experienced more infections (28) than expected (21.4). 
+# load burn data
+data(burn)
+
+# burn dataframe with new names
+burn1 <- burn
+burn1 <- data.frame(burn1,Treatment=factor(burn1$Z1,labels=c("Routine","Cleansing")))
+burn1 <- data.frame(burn1,Gender=factor(burn1$Z2,labels=c("Male","Female")))
+burn1 <- data.frame(burn1,Race=factor(burn1$Z3,labels=c("Nonwhite","White")))
+burn1 <- data.frame(burn1,PercentBurned=burn1$Z4)
+burn1 <- data.frame(burn1,SiteHead=factor(burn1$Z5,labels=c("NotBurned","Burned")))
+burn1 <- data.frame(burn1,SiteButtock=factor(burn1$Z6,labels=c("NotBurned","Burned")))
+burn1 <- data.frame(burn1,SiteTrunk=factor(burn1$Z7,labels=c("NotBurned","Burned")))
+burn1 <- data.frame(burn1,SiteUpperLeg=factor(burn1$Z8,labels=c("NotBurned","Burned")))
+burn1 <- data.frame(burn1,SiteLowerLeg=factor(burn1$Z9,labels=c("NotBurned","Burned")))
+burn1 <- data.frame(burn1,SiteRespTract=factor(burn1$Z10,labels=c("NotBurned","Burned")))
+burn1 <- data.frame(burn1,BurnType=factor(burn1$Z11,labels=c("Chemical","Scald","Electric","Flame")))
+
+# remove unuseful columns
+burn1 <- burn1[, -c(2:12)]
+```
+
+```{r, include = FALSE}
+burn1.surv <- Surv(burn1$T3, burn1$D3)
+surv_diff <- survdiff(burn1.surv ~ Treatment, data = burn1)
+```
+
+```{r, include = FALSE}
+# Fit KM and NA curves
+KMcurves <- survfit(burn1.surv ~ Treatment, data = burn1)
+NAcurves <- survfit(burn1.surv ~ Treatment, type = "fleming-harrington", data = burn1)
+```
+
+
+Fig. 1 highlights differences in infection-free survival between routine care and antimicrobial cleansing. After 30 days, 76% of patients in the cleansing group remained infection-free compared to 66% in the routine care group. By the end of the study, 70% of cleansing patients remained infection-free, versus 30% in the routine care group. Nelson-Aalen curves confirmed these trends, showing slightly higher infection-free percentages for both groups. The survival curves do not cross, suggesting the relative risk between the two treatment groups remains constant over the period observed. 
+
+```{r fig1, fig.cap="Fig. 1"}
+# Plot the KM curves
+plot(KMcurves, col = c("black", "red"), lwd = 2, lty = 1, xlab = "Time (days)", ylab = "Percent Infection-free", 
+     main = "KM and NA Survival Curves for Two Types of Treatment")
+
+# Add the NA curves
+lines(NAcurves, col = c("black", "red"), lwd = 2, lty = 2)
+
+# Add a legend
+legend("bottomright", 
+       legend = c("Routine Care (KM)", "Cleansing (KM)", "Routine Care (NA)", "Cleansing (NA)"),
+       col = c("black", "red", "black", "red"), 
+       lty = c(1, 1, 2, 2), 
+       lwd = 2)
+```
+
+Figure 1. Kaplan-Meier and Nelson-Aalen Survival Curves. 
+Both KM (solid line) and NA (dashed line) curves illustrates the proportion of patients remaining infection-free over time for routine care (black) and antimicrobial cleansing groups (red). Patients receiving antimicrobial cleansing consistently showed higher infection-free survival rates compared to routine care throughout the study.
+
+
+Furthermore, The log-rank test supports this difference with (\( \chi^2 = 3.8 \), and a boarderline p-value of 0.05. Patients in the antimicrobial cleansing group had fewer observed infections (20) than expected (26.6), while those in the routine care group experienced more infections (28) than expected (21.4). 
+
 
 These results suggest that antimicrobial cleansing offers a protective benefit in reducing infection risks, highlighting its potential as an effective intervention for burn patients.
 
+
 ## Cox Proportional Hazards Model
+```{r, include = FALSE}
+# Set up the burn2 with td covariates
+burn2 <- tmerge(data1 = burn1, data2 = burn1, id = Obs, 
+                tstop = T3, infection = event(T3, D3))
+burn2 <- tmerge(burn2, burn1, id = Obs, surgical = tdc(T1))
+burn2 <- tmerge(burn2, burn1, id = Obs, antibiotics = tdc(T2))
 
-The constructed final model was determined to include Treatment, Race, and the time-dependent covariate surgical excision, as these variables demonstrated clinical relevance and statistical significance. 
+# Define status to distinguish between the event and censoring
+burn2$status <- as.integer(with(burn2, (tstop == T3 & D3 == 1)))
 
-Patients who received antimicrobial cleansing were 40.4% less likely to develop an infection compared to those who received routine care (p = 0.082). While this result was not statistically significant, it suggests a potential protective effect of a cleansing against *Staphylococcus aureus* infection. White patients were significantly more likely to develop an infection compared to non-White patients, with an 8.86-fold higher likelihood of infection (p = 0.031). The wide confidence interval (95% CI: 1.22–64.34) for this result reflects some uncertainty, likely due to variability or a smaller sample size (n = 154). Finally, surgical excision was associated with a 60% lower likelihood of infection (p = 0.059 ), indicating a marginally significant effect.
+# Create the survival object
+burn2.surv <- with(burn2, Surv(time = tstart, time2 = tstop, event = status, type = "counting"))
 
-Overall, the model demonstrated good predictive performance, with a concordance index of 0.696, meaning it correctly predicted the order of infection risk in approximately 70% of cases. The likelihood ratio test confirmed the statistical significance of the model as a whole (p = 0.0004).
+fit_time_dep_sur <- coxph(burn2.surv ~ Treatment + Race + surgical, data = burn2)
+
+
+```
+
+The constructed final model was determined to include Treatment, Race, and the time-dependent covariate surgical excision, as these variables demonstrated statistical significance and clinical relevance. 
+
+Patients who received antimicrobial cleansing were 40.4% less likely to develop an infection compared to those who received routine care (p = 0.082). While this result was not statistically significant in this model, it suggests a potential protective effect of a cleansing against *Staphylococcus aureus* infection that needs to be further validated. White patients were significantly more likely to develop an infection compared to non-White patients, with an 8.86-fold higher likelihood of infection (p = 0.031). The wide confidence interval (95% CI: 1.22–64.34) for this result reflects uncertainty, likely due to the small sample size (n = 154). Finally, surgical excision was associated with a 60% lower likelihood of infection (p = 0.059), indicating a marginal significant effect.
+
+Overall, the cox model demonstrated good predictive performance, with a concordance index of 0.696, meaning it correctly predicted the order of infection risk in approximately 69.6% of cases. The likelihood ratio test confirmed the statistical significance of the model as a whole (p = 0.0004).
+
+```{r, echo = FALSE}
+summary(fit_time_dep_sur)
+```
 
 ## Residual Analysis
 
 ### Deviance Residuals
-The analysis of deviance residuals revealed several cases where the observed time to infection deviated significantly from the model’s predictions. A positive deviance residual indicates that the infection occurred later than predicted. 
-To be specific, observation 214 is a non-white male with 20% burns involving trunk who received cleansing care and had a deviance residual of 2.769. 
+The analysis of deviance residuals revealed several cases where the observed time to infection deviated significantly from the model’s predictions. A positive deviance residual indicates that the infection occurred later than predicted and vice versa. 
 
-Observation 70 is a white female patient with 36% burns involving the trunk and lower legs who underwent surgical excision and received antibiotic treatment, yet had a deviance residual of -2.124. Observation 160 is a male patient with 5% burns to the trunk and lower legs who received surgical excision but no antibiotics, with a deviance residual of -2.740. Both observation 118 and 160 
+To be specific, observation 65 is a while male with 85% percent burns on head, buttock, trunk, upperleg, and respirtory track who received routine care and had a deviance residual of 2.36. 
+
+Conversely, observation 15 is a white male with 20% burns on head and trunk, and he received routine care and no excision surgery or antibodies. This patient had a deviance residual of -1.33, suggesting that the observed infection occurred earlier than the model would have predicted.  
+
+Table 1 shows the patient characteristics of high deviance residual individuals (>2sd).
+
+In addition to deviance residual, DEBETA values were computed to measure influential observations. Large DFBETA values indicate that a specific observation has a strong effect on a particular predictor and may need further investigation. 
+
+For example, observation 91 is a white male with 20% burns, and he received cleansing care with both excision surgery and antibiotic treatment. This patient has a large influence on the time-dependent covariate coefficient `surgery` with a DFBETA value = 0.137. Additionally, observation 92 is a white male with 5% burns, and he received cleansing care and excision surgery. This observation also has a large influence on the coefficient of `surgery` with a DEBETA value = 0.212. Interestingly, he also has a high deviance residual value. 
+
+Table 1 shows the characistics of patients with a high DFBETA value. 
 
 
-Observations About Respiratory Tract Burns
-Patients with respiratory tract burns show an interesting trend toward prolonged infection-free survival. For instance, observation 214, a male patient with burns classified as "Flame," involving the trunk and respiratory tract, received antimicrobial cleansing and had a deviance residual of 2.769. This suggests that infection occurred much later than predicted. The apparent resilience of patients with respiratory tract burns could indicate a different response to infection risk compared to skin burns alone. However, the limited number of cases with respiratory burns in this dataset restricts drawing definitive conclusions.
+Since this is an association study instead of causal study so we failed to consider the confounder relationship and matching. We spend more effort on statical meaning for the prediction based on AIC based on their burn situation and demographics. 
 
-DFBETA values measure the influence of individual observations on the model’s coefficients. Large DFBETA values indicate that a specific observation has a strong effect on a particular predictor. 
 # Conclusion
-Provide actionable recommendations based on the analysis.
+In conclusion, the risk of infection was 40.4% lower in patients who received cleansing care, although not statistically significant. There was also some indication that excision surgery may be important for infection control. 
 
 # Appendices
 
